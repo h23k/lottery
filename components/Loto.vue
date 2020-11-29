@@ -1,94 +1,94 @@
 <template>
   <div>
-    <div class="number">
-      <table>
-        <thead>
-          <tr>
-            <th colspan="2">数字</th>
-            <th v-for="num in numbers" :key="num.number" @click="toggleChecked">
-              {{ num.number }}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th rowspan="3">本数字</th>
-            <th>回数</th>
-            <td v-for="num in numbers" :key="num.number">
-              {{ num.luckyCount }}回
-            </td>
-          </tr>
-          <tr>
-            <th>最近</th>
-            <td v-for="num in numbers" :key="num.number">
-              {{ num.luckyRecentCount }}回
-            </td>
-          </tr>
-          <tr>
-            <th>前回</th>
-            <td
-              v-for="num in numbers"
-              :key="num.number"
-              :class="[getIntervalClassName(getInterval(num.luckyLast))]"
-            >
-              {{ getInterval(num.luckyLast) }}回前
-            </td>
-          </tr>
-          <tr>
-            <th colspan="2">ボーナス</th>
-            <td
-              v-for="num in numbers"
-              :key="num.number"
-              :class="{ latest: getInterval(num.bonusLast) === 0 }"
-            >
-              {{ getInterval(num.bonusLast) }}回前
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="times">
-      <table>
-        <thead>
-          <tr>
-            <th>開催回</th>
-            <th :colspan="getNumberCount">本数字</th>
-            <th :colspan="getBonusCount">ボーナス数字</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="times in backnumberTimes" :key="times">
-            <th>{{ times }}回</th>
-            <td
-              v-for="num in sortByInterval4Backnumber(times)"
-              :key="num.number"
-              :class="[
-                { bonus: num.bonus === 1 },
-                getIntervalClassName(
-                  getInterval4Backnumber(num.number, times) - 1
-                ),
-              ]"
-            >
-              {{ num.number }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <v-row>
+      <v-col cols="6">
+        <v-data-table
+          dense
+          :hide-default-footer="true"
+          caption="全体"
+          :headers="[
+            { text: '数字', value: 'number', align: 'center' },
+            { text: '出現回数', value: 'luckyCount', align: 'right' },
+            { text: '出現率', value: 'luckyRate', align: 'right' },
+            { text: '出現差', value: 'timesDiff', align: 'right' },
+          ]"
+          :items="numbers"
+          :items-per-page="numbers.length"
+          :sort-by="['timesDiff', 'luckyCount', 'number']"
+          :sort-desc="[false, true, false]"
+          item-key="number"
+        >
+          <template v-slot:item.number="{ item }">
+            <NumberChip :number="item.number" />
+          </template>
+        </v-data-table>
+      </v-col>
+      <v-col cols="6">
+        <v-data-table
+          v-model="selected"
+          dense
+          show-select
+          :hide-default-footer="true"
+          caption="最近"
+          :headers="[
+            { text: '数字', value: 'number', align: 'center' },
+            { text: '出現回数', value: 'luckyRecentCount', align: 'right' },
+            { text: '出現率', value: 'luckyRecentRate', align: 'right' },
+            { text: '出現差', value: 'timesDiff', align: 'right' },
+          ]"
+          :items="numbers"
+          :items-per-page="numbers.length"
+          :sort-by="['luckyRecentCount', 'timesDiff', 'number']"
+          :sort-desc="[true, false, false]"
+          item-key="number"
+        >
+          <template v-slot:item.number="{ item }">
+            <NumberChip :number="item.number" />
+          </template>
+        </v-data-table>
+      </v-col>
+    </v-row>
+    <v-row>
+      <LotoInterval :type="type" :selected="selected" />
+    </v-row>
+    <v-row>
+      <LotoCombination
+        v-for="obj in selected"
+        :key="obj.number"
+        :type="type"
+        :number="obj.number"
+        :selected="selected"
+      />
+    </v-row>
+    <v-row>
+      <LotoBacknumber :type="type" :selected="selected" />
+    </v-row>
   </div>
 </template>
 
 <script>
 import { mapState, mapActions } from 'vuex'
+import NumberChip from '@/components/NumberChip'
+import LotoInterval from '@/components/LotoInterval'
+import LotoCombination from '@/components/LotoCombination'
+import LotoBacknumber from '@/components/LotoBacknumber'
 
 export default {
+  components: {
+    NumberChip,
+    LotoInterval,
+    LotoCombination,
+    LotoBacknumber,
+  },
   props: {
     type: {
       type: Number,
       required: true,
     },
   },
+  data: () => ({
+    selected: [],
+  }),
   computed: {
     getNumberCount() {
       return this.type === 6 ? 6 : 7
@@ -101,12 +101,10 @@ export default {
       'loto6LatestNumber',
       'loto6LatestBonus',
       'loto6Numbers',
-      'loto6Backnumber',
       'loto7LatestTimes',
       'loto7LatestNumber',
       'loto7LatestBonus',
       'loto7Numbers',
-      'loto7Backnumber',
     ]),
     latestTimes() {
       return this.type === 6 ? this.loto6LatestTimes : this.loto7LatestTimes
@@ -120,13 +118,6 @@ export default {
     numbers() {
       return this.type === 6 ? this.loto6Numbers : this.loto7Numbers
     },
-    backnumber() {
-      return this.type === 6 ? this.loto6Backnumber : this.loto7Backnumber
-    },
-    backnumberTimes() {
-      const keys = Object.keys(this.backnumber)
-      return keys.sort().reverse()
-    },
   },
   mounted() {
     if (this.type === 6) {
@@ -135,7 +126,7 @@ export default {
           this.setLoto6Numbers()
         })
         .then(() => {
-          this.setLoto6Backnumber({ max: 100 })
+          this.setLoto6Backnumber({ times: this.latestTimes, max: 104 })
         })
     } else {
       this.setLoto7Latest()
@@ -143,7 +134,7 @@ export default {
           this.setLoto7Numbers()
         })
         .then(() => {
-          this.setLoto7Backnumber({ max: 50 })
+          this.setLoto7Backnumber({ times: this.latestTimes, max: 52 })
         })
     }
   },
@@ -198,6 +189,11 @@ export default {
       } else {
         return null
       }
+    },
+    getBacknumberTotalCount(times) {
+      const index = this.backnumberTimes.indexOf(times)
+      const nums = this.backnumberTimes.slice(index)
+      return nums.length
     },
   },
 }
@@ -315,11 +311,11 @@ table {
 }
 
 .times {
-  height: 380px;
+  // height: 380px;
+  // overflow-y: auto;
+  // margin-right: -15px;
+  // padding-right: 15px;
   margin-top: 15px;
-  margin-right: -15px;
-  padding-right: 15px;
-  overflow-y: auto;
 
   table {
     tbody {
