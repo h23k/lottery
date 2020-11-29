@@ -13,109 +13,203 @@ const connectionConfig = {
   password: 'mysql',
 }
 
-app.get('/:type/latest', (req, res) => {
+app.get('/:type/latest', (req, res, next) => {
   const paramType = req.params.type === '6' ? 'loto6' : 'loto7'
   const sql = `select times, num, bonus
-                 from ${paramType}
-                where times = (select max(times) from ${paramType})
+                 from ??
+                where times = (select max(times) from ??)
                 order by bonus, num`
   const connection = mysql.createConnection(connectionConfig)
   connection.connect()
-  connection.query(sql, [], (error, results, fields) => {
-    if (error) throw error
-    let times = 0
-    const nums = []
-    const bonus = []
-    results.forEach((result) => {
-      times = times < result.times ? result.times : times
-      const num = result.num
-      switch (result.bonus) {
-        case 0:
-          nums.push(num)
-          break
-        case 1:
-          bonus.push(num)
-          break
-      }
-    })
-    res.json({ times, nums, bonus })
+  connection.query(sql, [paramType, paramType], (error, results, fields) => {
+    if (error) {
+      next(error)
+    } else {
+      let times = 0
+      const nums = []
+      const bonus = []
+      results.forEach((result) => {
+        times = times < result.times ? result.times : times
+        const num = result.num
+        switch (result.bonus) {
+          case 0:
+            nums.push(num)
+            break
+          case 1:
+            bonus.push(num)
+            break
+        }
+      })
+      res.json({ times, nums, bonus })
+    }
   })
   connection.end()
 })
 
-app.get('/:type/count', (req, res) => {
+app.get('/:type/count', (req, res, next) => {
   const paramType = req.params.type === '6' ? 'loto6' : 'loto7'
+  const recentTimes = req.params.type === '6' ? 103 : 51
   const sql = `select total.num, total.count, total.last, lucky.count, lucky.last, lucky_recent.count, bonus.count, bonus.last
                  from (select num, count(num) as count, max(times) as last
-                              from ${paramType}
+                              from ??
                              group by num) as total
                  left join (select num, count(num) as count, max(times) as last
-                              from ${paramType}
+                              from ??
                              where bonus = 0
                              group by num) as lucky
                    on total.num = lucky.num
                  left join (select num, count(num) as count, max(times) as last
-                              from ${paramType}
+                              from ??
                              where bonus = 0
-                               and times >= (select max(times) - 52 from ${paramType})
+                               and times >= (select max(times) - ? from ??)
                              group by num) as lucky_recent
                    on total.num = lucky_recent.num
                  left join (select num, count(num) as count, max(times) as last
-                              from ${paramType}
+                              from ??
                              where bonus = 1
                              group by num) as bonus
                    on total.num = bonus.num
                 order by lucky.last desc, lucky_recent.count desc, total.num`
   const connection = mysql.createConnection(connectionConfig)
   connection.connect()
-  connection.query({ sql, nestTables: true }, [], (error, results, fields) => {
-    if (error) throw error
-    const nums = results.map((result) => {
-      return {
-        number: result.total.num,
-        totalCount: result.total.count,
-        totalLast: result.total.last,
-        luckyCount: result.lucky.count,
-        luckyLast: result.lucky.last,
-        luckyRecentCount: result.lucky_recent.count,
-        bonusCount: result.bonus.count,
-        bonusLast: result.bonus.last,
+  connection.query(
+    { sql, nestTables: true },
+    [paramType, paramType, paramType, recentTimes, paramType, paramType],
+    (error, results, fields) => {
+      if (error) {
+        next(error)
+      } else {
+        const nums = results.map((result) => {
+          return {
+            number: result.total.num,
+            totalCount: result.total.count,
+            totalLast: result.total.last,
+            luckyCount: result.lucky.count,
+            luckyLast: result.lucky.last,
+            luckyRecentCount: result.lucky_recent.count,
+            bonusCount: result.bonus.count,
+            bonusLast: result.bonus.last,
+          }
+        })
+        res.json({ nums })
       }
-    })
-    res.json({ nums })
-  })
+    }
+  )
   connection.end()
 })
 
-app.get('/:type/:times', (req, res) => {
+app.get('/:type/:times', (req, res, next) => {
   const paramType = req.params.type === '6' ? 'loto6' : 'loto7'
+  const recentTimes = req.params.type === '6' ? 103 : 51
   const paramTimes = req.params.times
-  const sql = `select a.num, a.bonus, b.last
-                 from (select times, num, bonus
-                              from ${paramType}
-                             where times = ?) as a
-                 left join (select num, max(times) as last, bonus
-                              from ${paramType}
+  const sql = `select target.lottery_date, target.num, target.bonus, last.last, recent.count
+                 from (select times, lottery_date, num, bonus
+                              from ??
+                             where times = ?) as target
+                 left join (select num, bonus, max(times) as last
+                              from ??
                              where times < ?
-                             group by num, bonus) as b
-                   on a.num = b.num
-                  and a.bonus = b.bonus
-                order by a.bonus, a.num`
+                             group by num, bonus) as last
+                   on target.num = last.num
+                  and target.bonus = last.bonus
+                 left join (select num, bonus, count(num) as count
+                              from ??
+                             where times between (select max(times) - ? from ??)
+                                             and ?
+                             group by num, bonus) as recent
+                   on target.num = recent.num
+                  and target.bonus = recent.bonus
+                order by target.bonus, target.num`
   const connection = mysql.createConnection(connectionConfig)
   connection.connect()
   connection.query(
     { sql, nestTables: true },
-    [paramTimes, paramTimes],
+    [
+      paramType,
+      paramTimes,
+      paramType,
+      paramTimes,
+      paramType,
+      recentTimes,
+      paramType,
+      paramTimes,
+    ],
     (error, results, fields) => {
-      if (error) throw error
-      const nums = results.map((result) => {
-        return {
-          number: result.a.num,
-          bonus: result.a.bonus,
-          last: result.b.last,
-        }
-      })
-      res.json({ times: paramTimes, nums })
+      if (error) {
+        next(error)
+      } else {
+        const nums = results.map((result) => {
+          return {
+            date: result.target.lottery_date,
+            number: result.target.num,
+            bonus: result.target.bonus,
+            last: result.last.last,
+            count: result.recent.count,
+          }
+        })
+        res.json({ times: paramTimes, nums })
+      }
+    }
+  )
+  connection.end()
+})
+
+app.get('/:type/interval/:number', (req, res, next) => {
+  const paramType = req.params.type === '6' ? 'loto6' : 'loto7'
+  const recentTimes = req.params.type === '6' ? 103 : 51
+  const paramNumber = req.params.number
+  const sql = `select num, times
+                 from ??
+                where bonus = 0
+                  and num = ?
+                  and times >= (select max(times) - ? from ??)
+                order by times desc`
+  const connection = mysql.createConnection(connectionConfig)
+  connection.connect()
+  connection.query(
+    sql,
+    [paramType, paramNumber, recentTimes, paramType],
+    (error, results, fields) => {
+      if (error) {
+        next(error)
+      } else {
+        const times = []
+        results.forEach((result) => times.push(result.times))
+        res.json({ num: paramNumber, times })
+      }
+    }
+  )
+  connection.end()
+})
+
+app.get('/:type/combination/:number', (req, res, next) => {
+  const paramType = req.params.type === '6' ? 'loto6' : 'loto7'
+  const recentTimes = req.params.type === '6' ? 103 : 51
+  const paramNumber = req.params.number
+  const sql = `select num, count(num) as count
+                 from ??
+                where bonus = 0
+                  and times in (select times from ??
+                                 where bonus = 0
+                                   and num = ?
+                                   and times >= (select max(times) - ? from ??))
+                group by num
+                order by count desc`
+  const connection = mysql.createConnection(connectionConfig)
+  connection.connect()
+  connection.query(
+    sql,
+    [paramType, paramType, paramNumber, recentTimes, paramType],
+    (error, results, fields) => {
+      if (error) {
+        next(error)
+      } else {
+        const combination = {}
+        results.forEach(
+          (result) => (combination[`${result.num}`] = result.count)
+        )
+        res.json({ num: paramNumber, combination })
+      }
     }
   )
   connection.end()
