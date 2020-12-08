@@ -1,52 +1,11 @@
 <template>
   <div>
     <v-row>
-      <v-col cols="6">
-        <v-data-table
-          dense
-          :hide-default-footer="true"
-          caption="全体"
-          :headers="[
-            { text: '数字', value: 'number', align: 'center' },
-            { text: '出現回数', value: 'luckyCount', align: 'right' },
-            { text: '出現率', value: 'luckyRate', align: 'right' },
-            { text: '出現差', value: 'timesDiff', align: 'right' },
-          ]"
-          :items="numbers"
-          :items-per-page="numbers.length"
-          :sort-by="['timesDiff', 'luckyCount', 'number']"
-          :sort-desc="[false, true, false]"
-          item-key="number"
-        >
-          <template v-slot:item.number="{ item }">
-            <NumberChip :number="item.number" />
-          </template>
-        </v-data-table>
-      </v-col>
-      <v-col cols="6">
-        <v-data-table
-          v-model="selected"
-          dense
-          show-select
-          :hide-default-footer="true"
-          caption="最近"
-          :headers="[
-            { text: '数字', value: 'number', align: 'center' },
-            { text: '出現回数', value: 'luckyRecentCount', align: 'right' },
-            { text: '出現率', value: 'luckyRecentRate', align: 'right' },
-            { text: '出現差', value: 'timesDiff', align: 'right' },
-          ]"
-          :items="numbers"
-          :items-per-page="numbers.length"
-          :sort-by="['luckyRecentCount', 'timesDiff', 'number']"
-          :sort-desc="[true, false, false]"
-          item-key="number"
-        >
-          <template v-slot:item.number="{ item }">
-            <NumberChip :number="item.number" />
-          </template>
-        </v-data-table>
-      </v-col>
+      <LotoCount
+        :type="type"
+        :selected="selected"
+        @setSelected="updateSelected"
+      />
     </v-row>
     <v-row>
       <LotoInterval :type="type" :selected="selected" />
@@ -61,21 +20,21 @@
       />
     </v-row>
     <v-row>
-      <LotoBacknumber :type="type" :selected="selected" />
+      <LotoBacknumber :type="type" />
     </v-row>
   </div>
 </template>
 
 <script>
 import { mapState, mapActions } from 'vuex'
-import NumberChip from '@/components/NumberChip'
+import LotoCount from '@/components/LotoCount'
 import LotoInterval from '@/components/LotoInterval'
 import LotoCombination from '@/components/LotoCombination'
 import LotoBacknumber from '@/components/LotoBacknumber'
 
 export default {
   components: {
-    NumberChip,
+    LotoCount,
     LotoInterval,
     LotoCombination,
     LotoBacknumber,
@@ -100,11 +59,9 @@ export default {
       'loto6LatestTimes',
       'loto6LatestNumber',
       'loto6LatestBonus',
-      'loto6Numbers',
       'loto7LatestTimes',
       'loto7LatestNumber',
       'loto7LatestBonus',
-      'loto7Numbers',
     ]),
     latestTimes() {
       return this.type === 6 ? this.loto6LatestTimes : this.loto7LatestTimes
@@ -115,15 +72,18 @@ export default {
     latestBonus() {
       return this.type === 6 ? this.loto6LatestBonus : this.loto7LatestBonus
     },
-    numbers() {
-      return this.type === 6 ? this.loto6Numbers : this.loto7Numbers
-    },
   },
   mounted() {
     if (this.type === 6) {
       this.setLoto6Latest()
         .then(() => {
           this.setLoto6Numbers()
+        })
+        .then(() => {
+          this.setLoto6NumInterval({ max: 43 })
+        })
+        .then(() => {
+          this.setLoto6NumCombination({ max: 43 })
         })
         .then(() => {
           this.setLoto6Backnumber({ times: this.latestTimes, max: 104 })
@@ -134,21 +94,27 @@ export default {
           this.setLoto7Numbers()
         })
         .then(() => {
+          this.setLoto7NumInterval({ max: 37 })
+        })
+        .then(() => {
+          this.setLoto7NumCombination({ max: 37 })
+        })
+        .then(() => {
           this.setLoto7Backnumber({ times: this.latestTimes, max: 52 })
         })
     }
   },
   methods: {
-    toggleChecked(event) {
-      const target = event.target
-      target.classList.toggle('checked')
-    },
     ...mapActions('loto', [
       'setLoto6Latest',
       'setLoto6Numbers',
+      'setLoto6NumInterval',
+      'setLoto6NumCombination',
       'setLoto6Backnumber',
       'setLoto7Latest',
       'setLoto7Numbers',
+      'setLoto7NumInterval',
+      'setLoto7NumCombination',
       'setLoto7Backnumber',
     ]),
     getInterval(times) {
@@ -194,6 +160,18 @@ export default {
       const index = this.backnumberTimes.indexOf(times)
       const nums = this.backnumberTimes.slice(index)
       return nums.length
+    },
+    updateSelected({ number, isSelected }) {
+      if (isSelected) {
+        this.selected.push({ number })
+      } else {
+        for (let i = 0; i < this.selected.length; i++) {
+          if (this.selected[i].number === number) {
+            this.selected.splice(i, 1)
+            break
+          }
+        }
+      }
     },
   },
 }

@@ -15,7 +15,7 @@ const connectionConfig = {
 
 app.get('/:type/latest', (req, res, next) => {
   const paramType = req.params.type === '6' ? 'loto6' : 'loto7'
-  const sql = `select times, num, bonus
+  const sql = `select times, lottery_date, num, bonus
                  from ??
                 where times = (select max(times) from ??)
                 order by bonus, num`
@@ -25,11 +25,11 @@ app.get('/:type/latest', (req, res, next) => {
     if (error) {
       next(error)
     } else {
-      let times = 0
+      const times = results.length > 0 ? results[0].times : 0
+      const date = results.length > 0 ? results[0].lottery_date : ''
       const nums = []
       const bonus = []
       results.forEach((result) => {
-        times = times < result.times ? result.times : times
         const num = result.num
         switch (result.bonus) {
           case 0:
@@ -40,7 +40,7 @@ app.get('/:type/latest', (req, res, next) => {
             break
         }
       })
-      res.json({ times, nums, bonus })
+      res.json({ times, date, nums, bonus })
     }
   })
   connection.end()
@@ -69,7 +69,7 @@ app.get('/:type/count', (req, res, next) => {
                              where bonus = 1
                              group by num) as bonus
                    on total.num = bonus.num
-                order by lucky.last desc, lucky_recent.count desc, total.num`
+                order by total.num`
   const connection = mysql.createConnection(connectionConfig)
   connection.connect()
   connection.query(
@@ -79,14 +79,27 @@ app.get('/:type/count', (req, res, next) => {
       if (error) {
         next(error)
       } else {
+        const resultMaxTimes = results.reduce((prevVal, currVal) => {
+          return prevVal.total.last >= currVal.total.last ? prevVal : currVal
+        })
+        const maxTimes = resultMaxTimes.total.last
+        const recentCount =
+          maxTimes - (recentTimes + 1) <= 0 ? maxTimes : recentTimes + 1
         const nums = results.map((result) => {
           return {
             number: result.total.num,
+            timesDiff: maxTimes - result.lucky.last,
             totalCount: result.total.count,
+            totalRate:
+              Math.floor((result.total.count / maxTimes) * 100 * 100) / 100,
             totalLast: result.total.last,
             luckyCount: result.lucky.count,
             luckyLast: result.lucky.last,
             luckyRecentCount: result.lucky_recent.count,
+            luckyRecentRate:
+              Math.floor(
+                (result.lucky_recent.count / recentCount) * 100 * 100
+              ) / 100,
             bonusCount: result.bonus.count,
             bonusLast: result.bonus.last,
           }
@@ -138,16 +151,16 @@ app.get('/:type/:times', (req, res, next) => {
       if (error) {
         next(error)
       } else {
+        const lotteryDate = results[0].target.lottery_date
         const nums = results.map((result) => {
           return {
-            date: result.target.lottery_date,
             number: result.target.num,
             bonus: result.target.bonus,
             last: result.last.last,
             count: result.recent.count,
           }
         })
-        res.json({ times: paramTimes, nums })
+        res.json({ times: paramTimes, date: lotteryDate, nums })
       }
     }
   )

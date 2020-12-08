@@ -78,25 +78,7 @@ export const actions = {
     await this.$axios
       .get('/loto/6/count')
       .then(({ data }) => {
-        let luckyTotal = 0
-        let luckyRecentTotal = 0
-        data.nums.forEach((num) => {
-          luckyTotal += num.luckyCount
-          luckyRecentTotal += num.luckyRecentCount
-        })
-        luckyTotal /= 6
-        luckyRecentTotal /= 6
-
-        const nums = data.nums.map((num) => {
-          num.timesDiff = state.loto6LatestTimes - num.luckyLast
-          num.luckyRate =
-            Math.floor((num.luckyCount / luckyTotal) * 100 * 100) / 100
-          num.luckyRecentRate =
-            Math.floor((num.luckyRecentCount / luckyRecentTotal) * 100 * 100) /
-            100
-          return num
-        })
-        commit('SET_LOTO6_NUMBERS', nums)
+        commit('SET_LOTO6_NUMBERS', data.nums)
       })
       .catch((e) => {
         commit('SET_LOTO6_NUMBERS', [])
@@ -106,25 +88,7 @@ export const actions = {
     await this.$axios
       .get('/loto/7/count')
       .then(({ data }) => {
-        let luckyTotal = 0
-        let luckyRecentTotal = 0
-        data.nums.forEach((num) => {
-          luckyTotal += num.luckyCount
-          luckyRecentTotal += num.luckyRecentCount
-        })
-        luckyTotal /= 7
-        luckyRecentTotal /= 7
-
-        const nums = data.nums.map((num) => {
-          num.timesDiff = state.loto7LatestTimes - num.luckyLast
-          num.luckyRate =
-            Math.floor((num.luckyCount / luckyTotal) * 100 * 100) / 100
-          num.luckyRecentRate =
-            Math.floor((num.luckyRecentCount / luckyRecentTotal) * 100 * 100) /
-            100
-          return num
-        })
-        commit('SET_LOTO7_NUMBERS', nums)
+        commit('SET_LOTO7_NUMBERS', data.nums)
       })
       .catch((e) => {
         commit('SET_LOTO7_NUMBERS', [])
@@ -139,7 +103,10 @@ export const actions = {
       await this.$axios
         .get(`/loto/6/${targetTimes}`)
         .then(({ data }) => {
-          backnumber[data.times] = data.nums
+          backnumber[data.times] = {
+            date: data.date,
+            nums: data.nums,
+          }
         })
         .catch((e) => {
           backnumber[targetTimes] = []
@@ -154,7 +121,10 @@ export const actions = {
       await this.$axios
         .get(`/loto/7/${targetTimes}`)
         .then(({ data }) => {
-          backnumber[data.times] = data.nums
+          backnumber[data.times] = {
+            date: data.date,
+            nums: data.nums,
+          }
         })
         .catch((e) => {
           backnumber[targetTimes] = []

@@ -1,11 +1,11 @@
 <template>
   <v-col cols="12" sm="6" md="4" lg="2">
     <v-data-table
-      v-model="selected"
+      v-model="selectRow"
       dense
       show-select
       :hide-default-footer="true"
-      :caption="number"
+      :caption="String(number)"
       :headers="numCombinationHeader"
       :items="numCombinationItems"
       :items-per-page="numCombinationItems.length"
@@ -14,14 +14,14 @@
       item-key="number"
     >
       <template v-slot:item.number="{ item }">
-        <NumberChip :number="item.number" />
+        <NumberChip :number="Number(item.number)" />
       </template>
     </v-data-table>
   </v-col>
 </template>
 
 <script>
-import { mapState, mapActions } from 'vuex'
+import { mapState } from 'vuex'
 import NumberChip from '@/components/NumberChip'
 
 export default {
@@ -44,6 +44,9 @@ export default {
       },
     },
   },
+  data: () => ({
+    selectRow: [],
+  }),
   computed: {
     ...mapState('loto', ['loto6NumCombination', 'loto7NumCombination']),
     numCombination() {
@@ -81,14 +84,10 @@ export default {
     },
   },
   mounted() {
-    if (this.type === 6) {
-      this.setLoto6NumCombination({ max: 43 })
-    } else {
-      this.setLoto7NumCombination({ max: 37 })
-    }
+    this.selectRow = this.selected
   },
-  methods: {
-    ...mapActions('loto', ['setLoto6NumCombination', 'setLoto7NumCombination']),
+  beforeUpdate() {
+    this.selectRow = this.selected
   },
 }
 </script>
