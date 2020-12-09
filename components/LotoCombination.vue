@@ -13,7 +13,7 @@
       :sort-desc="true"
       item-key="number"
     >
-      <template v-slot:item.number="{ item }">
+      <template v-slot:[`item.number`]="{ item }">
         <NumberChip :number="Number(item.number)" />
       </template>
     </v-data-table>

@@ -13,10 +13,10 @@
       :sort-desc="[false, false]"
       item-key="number"
     >
-      <template v-slot:item.number="{ item }">
+      <template v-slot:[`item.number`]="{ item }">
         <NumberChip :number="Number(item.number)" />
       </template>
-      <template v-slot:item.current="{ item }">
+      <template v-slot:[`item.current`]="{ item }">
         <span v-if="isMostCount(item)" style="color: red; font-weight: bold">
           {{ item.current }}
         </span>

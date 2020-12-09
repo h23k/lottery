@@ -9,52 +9,52 @@
       :sort-desc="true"
       item-key="times"
     >
-      <template v-slot:item.times="{ item }">
+      <template v-slot:[`item.times`]="{ item }">
         {{ item.times }}
         <br />
         {{ item.date }}
       </template>
 
-      <template v-slot:item.number1="{ item }">
+      <template v-slot:[`item.number1`]="{ item }">
         <NumberChip :number="Number(item.number1)" />
         <br />
         {{ item.interval1 }}回前
       </template>
-      <template v-slot:item.number2="{ item }">
+      <template v-slot:[`item.number2`]="{ item }">
         <NumberChip :number="Number(item.number2)" />
         <br />
         {{ item.interval2 }}回前
       </template>
-      <template v-slot:item.number3="{ item }">
+      <template v-slot:[`item.number3`]="{ item }">
         <NumberChip :number="Number(item.number3)" />
         <br />
         {{ item.interval3 }}回前
       </template>
-      <template v-slot:item.number4="{ item }">
+      <template v-slot:[`item.number4`]="{ item }">
         <NumberChip :number="Number(item.number4)" />
         <br />
         {{ item.interval4 }}回前
       </template>
-      <template v-slot:item.number5="{ item }">
+      <template v-slot:[`item.number5`]="{ item }">
         <NumberChip :number="Number(item.number5)" />
         <br />
         {{ item.interval5 }}回前
       </template>
-      <template v-slot:item.number6="{ item }">
+      <template v-slot:[`item.number6`]="{ item }">
         <NumberChip :number="Number(item.number6)" />
         <br />
         {{ item.interval6 }}回前
       </template>
-      <template v-slot:item.number7="{ item }">
+      <template v-slot:[`item.number7`]="{ item }">
         <NumberChip :number="Number(item.number7)" />
         <br />
         {{ item.interval7 }}回前
       </template>
 
-      <template v-slot:item.bonus1="{ item }">
+      <template v-slot:[`item.bonus1`]="{ item }">
         <NumberChip :number="Number(item.bonus1)" />
       </template>
-      <template v-slot:item.bonus2="{ item }">
+      <template v-slot:[`item.bonus2`]="{ item }">
         <NumberChip :number="Number(item.bonus2)" />
       </template>
     </v-data-table>

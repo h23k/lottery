@@ -13,13 +13,15 @@
       :sort-desc="[true, false, false]"
       item-key="number"
     >
-      <template v-slot:item.data-table-select="{ item, isSelected, select }">
+      <template
+        v-slot:[`item.data-table-select`]="{ item, isSelected, select }"
+      >
         <v-simple-checkbox
           :value="isSelected"
           @input="clickCheckBox(item, isSelected, select)"
         ></v-simple-checkbox>
       </template>
-      <template v-slot:item.number="{ item }">
+      <template v-slot:[`item.number`]="{ item }">
         <NumberChip :number="Number(item.number)" />
       </template>
     </v-data-table>
