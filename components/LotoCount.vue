@@ -119,6 +119,9 @@ export default {
             },
           ],
         },
+        tooltips: {
+          mode: 'index',
+        },
       }
     },
   },

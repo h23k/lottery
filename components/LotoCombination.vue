@@ -48,7 +48,15 @@ export default {
     selectRow: [],
   }),
   computed: {
-    ...mapState('loto', ['loto6NumCombination', 'loto7NumCombination']),
+    ...mapState('loto', [
+      'loto6Numbers',
+      'loto6NumCombination',
+      'loto7Numbers',
+      'loto7NumCombination',
+    ]),
+    numbers() {
+      return this.type === 6 ? this.loto6Numbers : this.loto7Numbers
+    },
     numCombination() {
       return this.type === 6
         ? this.loto6NumCombination
@@ -57,7 +65,9 @@ export default {
     numCombinationHeader() {
       return [
         { text: '数字', value: 'number', align: 'center' },
-        { text: '回数', value: 'count', align: 'right' },
+        { text: '組合せ回数(回)', value: 'comboCount', align: 'right' },
+        { text: '出現回数(回)', value: 'recentCount', align: 'right' },
+        { text: '出現差(回前)', value: 'interval', align: 'right' },
       ]
     },
     numCombinationItems() {
@@ -75,9 +85,14 @@ export default {
         .reverse()
       const items = []
       sortCombination.forEach((key) => {
+        const number = this.numbers.find(
+          (number) => String(number.number) === key
+        )
         items.push({
           number: key,
-          count: combination[key],
+          comboCount: combination[key],
+          recentCount: number.luckyRecentCount,
+          interval: number.timesDiff,
         })
       })
       return items
