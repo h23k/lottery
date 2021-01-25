@@ -9,12 +9,15 @@
       :headers="numCombinationHeader"
       :items="numCombinationItems"
       :items-per-page="numCombinationItems.length"
-      sort-by="count"
-      :sort-desc="true"
+      :sort-by="['comboCount', 'interval']"
+      :sort-desc="[true, false]"
       item-key="number"
     >
       <template v-slot:[`item.number`]="{ item }">
-        <NumberChip :number="Number(item.number)" />
+        <NumberChip
+          :number="Number(item.number)"
+          :outlined="!isSelected(item.number)"
+        />
       </template>
     </v-data-table>
   </v-col>
@@ -103,6 +106,14 @@ export default {
   },
   beforeUpdate() {
     this.selectRow = this.selected
+  },
+  methods: {
+    isSelected(number) {
+      const selectedIndex = this.selected.findIndex((element) => {
+        return element.number === Number(number)
+      })
+      return selectedIndex !== -1
+    },
   },
 }
 </script>

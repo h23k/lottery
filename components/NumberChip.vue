@@ -1,5 +1,5 @@
 <template>
-  <v-chip :color="getColor()" dark>
+  <v-chip :color="getColor()" :outlined="outlined" dark>
     {{ formatedNumber }}
   </v-chip>
 </template>
@@ -10,6 +10,10 @@ export default {
     number: {
       type: Number,
       required: true,
+    },
+    outlined: {
+      type: Boolean,
+      default: true,
     },
   },
   computed: {
@@ -25,10 +29,10 @@ export default {
           color = 'red'
           break
         case 1:
-          color = 'orange'
+          color = 'brown'
           break
         case 2:
-          color = 'yellow'
+          color = 'yellow darken-4'
           break
         case 3:
           color = 'green'

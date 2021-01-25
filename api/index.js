@@ -83,23 +83,18 @@ app.get('/:type/count', (req, res, next) => {
           return prevVal.total.last >= currVal.total.last ? prevVal : currVal
         })
         const maxTimes = resultMaxTimes.total.last
-        const recentCount =
+        const recentCountMax =
           maxTimes - (recentTimes + 1) <= 0 ? maxTimes : recentTimes + 1
         const nums = results.map((result) => {
           return {
             number: result.total.num,
-            timesDiff: maxTimes - result.lucky.last,
+            recentCountMax,
+            timesDiff: maxTimes - result.lucky.last + 1,
             totalCount: result.total.count,
-            totalRate:
-              Math.floor((result.total.count / maxTimes) * 100 * 100) / 100,
             totalLast: result.total.last,
             luckyCount: result.lucky.count,
-            luckyLast: result.lucky.last,
             luckyRecentCount: result.lucky_recent.count,
-            luckyRecentRate:
-              Math.floor(
-                (result.lucky_recent.count / recentCount) * 100 * 100
-              ) / 100,
+            luckyLast: result.lucky.last,
             bonusCount: result.bonus.count,
             bonusLast: result.bonus.last,
           }

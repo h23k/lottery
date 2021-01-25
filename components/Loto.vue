@@ -1,14 +1,30 @@
 <template>
   <div>
-    <v-row>
+    <v-row class="mb-10">
       <LotoCount
         :type="type"
         :selected="selected"
+        :backnumber-count="backnumberIntervals.backnumberCount"
+        :interval-summary="backnumberIntervals.backnumberIntervalItems"
+        :intervals="backnumberIntervals.backnumberNumberItems"
+        @onLoad="getNumbers"
         @setSelected="updateSelected"
       />
     </v-row>
-    <v-row>
-      <LotoInterval :type="type" :selected="selected" />
+    <!-- <v-row class="mb-10">
+      <LotoInterval
+        :type="type"
+        :selected="selected"
+        :numbers="numbers"
+        @onLoad="getIntervals"
+      />
+    </v-row> -->
+    <v-row class="mb-10">
+      <LotoBacknumber
+        :type="type"
+        :selected="selected"
+        @onLoad="getBacknumberIntervals"
+      />
     </v-row>
     <v-row>
       <LotoCombination
@@ -19,23 +35,20 @@
         :selected="selected"
       />
     </v-row>
-    <v-row>
-      <LotoBacknumber :type="type" />
-    </v-row>
   </div>
 </template>
 
 <script>
 import { mapState, mapActions } from 'vuex'
 import LotoCount from '@/components/LotoCount'
-import LotoInterval from '@/components/LotoInterval'
+// import LotoInterval from '@/components/LotoInterval'
 import LotoCombination from '@/components/LotoCombination'
 import LotoBacknumber from '@/components/LotoBacknumber'
 
 export default {
   components: {
     LotoCount,
-    LotoInterval,
+    // LotoInterval,
     LotoCombination,
     LotoBacknumber,
   },
@@ -47,6 +60,9 @@ export default {
   },
   data: () => ({
     selected: [],
+    numbers: [],
+    intervals: [],
+    backnumberIntervals: {},
   }),
   computed: {
     getNumberCount() {
@@ -172,6 +188,15 @@ export default {
           }
         }
       }
+    },
+    getNumbers(numbers) {
+      this.numbers = numbers
+    },
+    getIntervals(intervals) {
+      this.intervals = intervals
+    },
+    getBacknumberIntervals(backnumberIntervals) {
+      this.backnumberIntervals = backnumberIntervals
     },
   },
 }

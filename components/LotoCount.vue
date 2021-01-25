@@ -5,12 +5,12 @@
       dense
       show-select
       :hide-default-footer="true"
-      caption="出現回数（最近）"
-      :headers="numberHeader"
-      :items="numbers"
-      :items-per-page="numbers.length"
-      :sort-by="['luckyRecentCount', 'timesDiff', 'number']"
-      :sort-desc="[true, false, false]"
+      caption="出現回数"
+      :headers="dataTableHeaders"
+      :items="countItems"
+      :items-per-page="countItems.length"
+      :sort-by="['timesDiffRate', 'luckyRecentRate', 'number']"
+      :sort-desc="[true, true, false]"
       item-key="number"
     >
       <template
@@ -22,23 +22,20 @@
         ></v-simple-checkbox>
       </template>
       <template v-slot:[`item.number`]="{ item }">
-        <NumberChip :number="Number(item.number)" />
+        <NumberChip :number="Number(item.number)" :outlined="false" />
       </template>
     </v-data-table>
-    <v-divider></v-divider>
-    <ChartBar :chart-data="chartBarData" :options="chartBarOptions" />
   </v-col>
 </template>
 
 <script>
 import { mapState } from 'vuex'
 import NumberChip from '@/components/NumberChip'
-import ChartBar from '@/components/ChartBar'
+import LuckyIntervals from '@/plugins/lucky-intervals'
 
 export default {
   components: {
     NumberChip,
-    ChartBar,
   },
   props: {
     type: {
@@ -51,88 +48,131 @@ export default {
         return []
       },
     },
+    backnumberCount: {
+      type: Number,
+      default: 0,
+    },
+    intervalSummary: {
+      type: Array,
+      default: () => {
+        return []
+      },
+    },
+    intervals: {
+      type: Array,
+      default: () => {
+        return []
+      },
+    },
   },
   data: () => ({
     selectRow: [],
+    dataTableHeaders: [
+      { text: '数字', value: 'number', align: 'center' },
+      { text: '全体回数(回)', value: 'luckyCount', align: 'right' },
+      { text: '最近回数(回)', value: 'luckyRecentCount', align: 'right' },
+      { text: '最近率(%)', value: 'recentRate', align: 'right' },
+      { text: '最近出現率(%)', value: 'luckyRecentRate', align: 'right' },
+      { text: '出現間隔(回前)', value: 'timesDiff', align: 'right' },
+      { text: '出現間隔率(%)', value: 'timesDiffRate', align: 'right' },
+      { text: '出現差数(回)', value: 'intervalCount', align: 'right' },
+    ],
   }),
   computed: {
     getNumberCount() {
       return this.type === 6 ? 6 : 7
     },
-    ...mapState('loto', ['loto6Numbers', 'loto7Numbers']),
+    ...mapState('loto', [
+      'loto6LatestTimes',
+      'loto6Numbers',
+      'loto7LatestTimes',
+      'loto7Numbers',
+    ]),
+    latestTimes() {
+      return this.type === 6 ? this.loto6LatestTimes : this.loto7LatestTimes
+    },
     numbers() {
       return this.type === 6 ? this.loto6Numbers : this.loto7Numbers
     },
-    numberHeader() {
-      return [
-        { text: '数字', value: 'number', align: 'center' },
-        { text: '出現回数(回)', value: 'luckyRecentCount', align: 'right' },
-        { text: '出現率(%)', value: 'luckyRecentRate', align: 'right' },
-        { text: '出現差(回前)', value: 'timesDiff', align: 'right' },
-      ]
-    },
-    chartBarData() {
-      const data = {
-        labels: [],
-        datasets: [
-          {
-            label: ['出現回数'],
-            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-            borderColor: 'rgb(255, 99, 132)',
-            borderWidth: 1,
-            data: [],
-            yAxisID: 'total',
-          },
-          {
-            label: ['出現回数（最近）'],
-            backgroundColor: 'rgb(54, 162, 235, 0.2)',
-            borderColor: 'rgb(54, 162, 235)',
-            borderWidth: 1,
-            data: [],
-            yAxisID: 'recent',
-          },
-        ],
-      }
-      this.numbers.forEach((element) => {
-        data.labels.push(element.number)
-        data.datasets[0].data.push(element.luckyCount)
-        data.datasets[1].data.push(element.luckyRecentCount)
+    countItems() {
+      return this.numbers.map((number) => {
+        const item = number
+        item.totalRate = this.$convertDisplayRate(
+          this.latestTimes,
+          number.totalCount
+        )
+        item.luckyRate = this.$convertDisplayRate(
+          this.latestTimes,
+          number.luckyCount
+        )
+        item.luckyRecentRate = this.$convertDisplayRate(
+          number.recentCountMax,
+          number.luckyRecentCount
+        )
+        item.recentRate = this.$convertDisplayRate(
+          number.luckyCount,
+          number.luckyRecentCount
+        )
+        const intervalKeysIndex = LuckyIntervals.getIntervalKeysIndex(
+          number.timesDiff
+        )
+        const intervalSummary = this.intervalSummary[intervalKeysIndex] || {
+          timesCount: 0,
+        }
+        item.timesDiffRate = this.$convertDisplayRate(
+          this.numbers.length * this.backnumberCount,
+          this.intervalCounts[intervalKeysIndex] * intervalSummary.timesCount
+        )
+        const interval = this.intervals.find((element) => {
+          if (Number(element.number) === Number(number.number)) {
+            return element
+          }
+        })
+        const intervalKey = LuckyIntervals.getIntervalKey(number.timesDiff)
+        if (interval) {
+          item.intervalCount = interval[intervalKey]
+        }
+        return item
       })
-      return data
     },
-    chartBarOptions() {
-      return {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          yAxes: [
-            {
-              id: 'total',
-              position: 'left',
-            },
-            {
-              id: 'recent',
-              position: 'right',
-              ticks: {
-                beginAtZero: true,
-              },
-            },
-          ],
-        },
-        tooltips: {
-          mode: 'index',
-        },
-      }
+    intervalCounts() {
+      const intervalCounts = []
+      const intervalKeys = LuckyIntervals.getIntervalKeys()
+      intervalKeys.forEach((intervalKey) => {
+        intervalCounts.push(0)
+      })
+      this.numbers.forEach((number) => {
+        const intervalKeysIndex = LuckyIntervals.getIntervalKeysIndex(
+          number.timesDiff
+        )
+        intervalCounts[intervalKeysIndex]++
+      })
+      return intervalCounts
     },
   },
   beforeUpdate() {
     this.selectRow = this.selected
+  },
+  updated() {
+    this.$emit(
+      'onLoad',
+      this.countItems.map((item) => {
+        return {
+          number: item.number,
+          timesDiff: item.timesDiff,
+          recentRate: item.recentRate,
+          luckyCount: item.luckyCount,
+          luckyRecentCount: item.luckyRecentCount,
+        }
+      })
+    )
   },
   methods: {
     clickCheckBox(item, isSelected, select) {
       select(!isSelected)
       this.$emit('setSelected', {
         number: item.number,
+        interval: item.timesDiff,
         isSelected: !isSelected,
       })
     },
