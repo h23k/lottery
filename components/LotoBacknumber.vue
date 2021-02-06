@@ -1,18 +1,6 @@
 <template>
   <v-col>
     <v-data-table
-      dense
-      :hide-default-footer="true"
-      caption="出現間隔集計"
-      :headers="backnumberIntervalHeader"
-      :items="backnumberIntervalItems"
-      :items-per-page="backnumberIntervalItems.length"
-      sort-by="luckyRate"
-      :sort-desc="true"
-      item-key="interval"
-    ></v-data-table>
-    <v-divider class="my-10"></v-divider>
-    <v-data-table
       v-model="selectRow"
       dense
       show-select
@@ -43,9 +31,21 @@
     <v-divider class="my-10"></v-divider>
     <v-data-table
       dense
+      :hide-default-footer="true"
+      caption="出現間隔集計"
+      :headers="backnumberIntervalHeader"
+      :items="backnumberIntervalItems"
+      :items-per-page="backnumberIntervalItems.length"
+      sort-by="luckyRate"
+      :sort-desc="true"
+      item-key="interval"
+    ></v-data-table>
+    <v-divider class="my-10"></v-divider>
+    <v-data-table
+      dense
       caption="過去の結果"
       :footer-props="{
-        itemsPerPageOptions: [10, 52, 104, -1],
+        itemsPerPageOptions: [10, 20, 50, -1],
       }"
       :headers="backnumberHeader"
       :items="backnumberItems"
@@ -234,7 +234,7 @@ export default {
         this.sortByInterval4Backnumber(times).forEach((element) => {
           if (element.bonus !== 0) return
           const interval = times - element.last
-          const intervalKey = this.getIntervalKey(interval)
+          const intervalKey = LuckyIntervals.getIntervalKey(interval)
           const summary = intervalSummary[intervalKey] || {
             totalCount: 0,
             timesCount: 0,
@@ -253,7 +253,7 @@ export default {
           )
           if (prevNumber !== undefined) {
             const prevInterval = element.last - prevNumber.last
-            const prevIntervalKey = this.getIntervalKey(prevInterval)
+            const prevIntervalKey = LuckyIntervals.getIntervalKey(prevInterval)
             const prevIntervalCount =
               intervalSummary[intervalKey][prevIntervalKey] || 0
             intervalSummary[intervalKey][prevIntervalKey] =
@@ -296,13 +296,28 @@ export default {
       const headers = []
       headers.push({ text: '数字', value: 'number', align: 'center' })
       headers.push({
+        text: '出現回数(回)',
+        value: 'count',
+        align: 'right',
+      })
+      headers.push({
+        text: '出現間隔率(%)',
+        value: 'intervalRate',
+        align: 'right',
+      })
+      headers.push({
         text: '出現間隔(回前)',
-        value: 'interval',
+        value: 'current',
+        align: 'right',
+      })
+      headers.push({
+        text: '出現間隔平均(回)',
+        value: 'intervalAvg',
         align: 'right',
       })
       LuckyIntervals.getIntervalKeys().forEach((intervalKey) => {
         headers.push({
-          text: `${intervalKey}回前`,
+          text: `${intervalKey}回前(回)`,
           value: intervalKey,
           align: 'right',
         })
@@ -315,13 +330,21 @@ export default {
         this.sortByInterval4Backnumber(times).forEach((element) => {
           if (element.bonus !== 0) return
           const number = element.number
-          const last = element.last
+          const interval = times - element.last
 
           let index = items.findIndex(
             (item) => Number(item.number) === Number(number)
           )
           if (index === -1) {
-            const obj = { number, interval: this.latestTimes - times + 1 }
+            const obj = {
+              number,
+              current: this.latestTimes - times + 1,
+              currentIntervalKey: LuckyIntervals.getIntervalKey(
+                this.latestTimes - times + 1
+              ),
+              count: 0,
+              intervalTotal: 0,
+            }
             LuckyIntervals.getIntervalKeys().forEach((val) => {
               obj[val] = 0
             })
@@ -331,8 +354,16 @@ export default {
           }
 
           const item = items[index]
-          const intervalKey = LuckyIntervals.getIntervalKey(times - last)
+          item.count++
+          item.intervalTotal += interval
+          const intervalKey = LuckyIntervals.getIntervalKey(interval)
           item[intervalKey]++
+          item.intervalRate = this.$convertDisplayRate(
+            item.count,
+            item[`${item.currentIntervalKey}`]
+          )
+          item.intervalAvg =
+            Math.floor((item.intervalTotal / item.count) * 10) / 10
           items[index] = item
         })
       })
@@ -376,13 +407,6 @@ export default {
         return aInterval - bInterval
       })
       return arr
-    },
-    getIntervalKey(interval) {
-      const intervalKeys = LuckyIntervals.getIntervalKeys()
-      return (
-        intervalKeys.find((intervalKey) => intervalKey === String(interval)) ||
-        intervalKeys.slice(-1)[0]
-      )
     },
   },
 }

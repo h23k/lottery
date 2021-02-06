@@ -71,7 +71,7 @@ export default {
       { text: '数字', value: 'number', align: 'center' },
       { text: '全体回数(回)', value: 'luckyCount', align: 'right' },
       { text: '最近回数(回)', value: 'luckyRecentCount', align: 'right' },
-      { text: '最近率(%)', value: 'recentRate', align: 'right' },
+      { text: '全体出現率(%)', value: 'luckyRate', align: 'right' },
       { text: '最近出現率(%)', value: 'luckyRecentRate', align: 'right' },
       { text: '出現間隔(回前)', value: 'timesDiff', align: 'right' },
       { text: '出現間隔率(%)', value: 'timesDiffRate', align: 'right' },

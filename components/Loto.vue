@@ -1,5 +1,35 @@
 <template>
   <div>
+    <v-row>
+      <v-col>
+        <v-card elevation="1">
+          <v-card-title>前回結果</v-card-title>
+          <v-card-text>
+            <v-layout>
+              <v-flex xs2 class="text-center"> {{ latestTimes }}回 </v-flex>
+              <v-divider vertical></v-divider>
+              <v-flex xs7 class="d-flex justify-space-around">
+                <span v-for="number in latestNumber" :key="number">
+                  {{ number }}
+                </span>
+              </v-flex>
+              <v-divider vertical></v-divider>
+              <v-flex xs3 class="d-flex justify-space-around">
+                <span v-for="bonus in latestBonus" :key="bonus">
+                  {{ bonus }}
+                </span>
+              </v-flex>
+            </v-layout>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+    <v-row class="mb-10">
+      <LotoCountChart :type="type" />
+    </v-row>
+    <v-row class="mb-10">
+      <LotoBacknumberChart :type="type" />
+    </v-row>
     <v-row class="mb-10">
       <LotoCount
         :type="type"
@@ -11,14 +41,9 @@
         @setSelected="updateSelected"
       />
     </v-row>
-    <!-- <v-row class="mb-10">
-      <LotoInterval
-        :type="type"
-        :selected="selected"
-        :numbers="numbers"
-        @onLoad="getIntervals"
-      />
-    </v-row> -->
+    <v-row class="mb-10">
+      <LotoInterval :type="type" :selected="selected" @onLoad="getIntervals" />
+    </v-row>
     <v-row class="mb-10">
       <LotoBacknumber
         :type="type"
@@ -40,18 +65,8 @@
 
 <script>
 import { mapState, mapActions } from 'vuex'
-import LotoCount from '@/components/LotoCount'
-// import LotoInterval from '@/components/LotoInterval'
-import LotoCombination from '@/components/LotoCombination'
-import LotoBacknumber from '@/components/LotoBacknumber'
 
 export default {
-  components: {
-    LotoCount,
-    // LotoInterval,
-    LotoCombination,
-    LotoBacknumber,
-  },
   props: {
     type: {
       type: Number,
