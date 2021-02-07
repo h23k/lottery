@@ -5,8 +5,10 @@
         <v-card elevation="1">
           <v-card-title>前回結果</v-card-title>
           <v-card-text>
-            <v-layout>
-              <v-flex xs2 class="text-center"> {{ latestTimes }}回 </v-flex>
+            <v-layout align-center>
+              <v-flex xs2 class="text-center">
+                {{ latestDate }}<br />{{ latestTimes }}回
+              </v-flex>
               <v-divider vertical></v-divider>
               <v-flex xs7 class="d-flex justify-space-around">
                 <span v-for="number in latestNumber" :key="number">
@@ -88,14 +90,19 @@ export default {
     },
     ...mapState('loto', [
       'loto6LatestTimes',
+      'loto6LatestDate',
       'loto6LatestNumber',
       'loto6LatestBonus',
       'loto7LatestTimes',
+      'loto7LatestDate',
       'loto7LatestNumber',
       'loto7LatestBonus',
     ]),
     latestTimes() {
       return this.type === 6 ? this.loto6LatestTimes : this.loto7LatestTimes
+    },
+    latestDate() {
+      return this.type === 6 ? this.loto6LatestDate : this.loto7LatestDate
     },
     latestNumber() {
       return this.type === 6 ? this.loto6LatestNumber : this.loto7LatestNumber

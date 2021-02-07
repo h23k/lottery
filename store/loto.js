@@ -1,5 +1,6 @@
 export const state = () => ({
   loto6LatestTimes: 0,
+  loto6LatestDate: '',
   loto6LatestNumber: [],
   loto6LatestBonus: [],
   loto6Numbers: [],
@@ -7,6 +8,7 @@ export const state = () => ({
   loto6NumCombination: [],
   loto6Backnumber: {},
   loto7LatestTimes: 0,
+  loto7LatestDate: '',
   loto7LatestNumber: [],
   loto7LatestBonus: [],
   loto7Numbers: [],
@@ -18,11 +20,13 @@ export const state = () => ({
 export const mutations = {
   SET_LOTO6_LATEST(state, latest) {
     state.loto6LatestTimes = latest.times
+    state.loto6LatestDate = latest.date
     state.loto6LatestNumber = latest.nums
     state.loto6LatestBonus = latest.bonus
   },
   SET_LOTO7_LATEST(state, latest) {
     state.loto7LatestTimes = latest.times
+    state.loto7LatestDate = latest.date
     state.loto7LatestNumber = latest.nums
     state.loto7LatestBonus = latest.bonus
   },

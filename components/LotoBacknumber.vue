@@ -54,9 +54,7 @@
       item-key="times"
     >
       <template v-slot:[`item.times`]="{ item }">
-        {{ item.times }}
-        <br />
-        {{ item.date }}
+        {{ item.date }}<br />{{ item.times }}
       </template>
 
       <template v-slot:[`item.number1`]="{ item }">
