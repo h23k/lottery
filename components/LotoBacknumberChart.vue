@@ -28,7 +28,7 @@ export default {
       responsive: true,
       maintainAspectRatio: false,
       tooltips: {
-        mode: 'x',
+        mode: 'index',
       },
     },
     barOptions: {
@@ -62,7 +62,7 @@ export default {
           backgroundColor: colors[i].background,
           borderColor: colors[i].border,
           borderWidth: 1,
-          // lineTension: 0,
+          lineTension: 0,
           // fill: false,
           data: [],
         })

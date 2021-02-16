@@ -9,8 +9,8 @@
       :headers="dataTableHeaders"
       :items="intervalItems"
       :items-per-page="intervalItems.length"
-      :sort-by="['currentRate', '0', 'number']"
-      :sort-desc="[true, false, false]"
+      :sort-by="['currentRate', '0', 'count', 'number']"
+      :sort-desc="[true, false, true, false]"
       item-key="number"
     >
       <template v-slot:[`item.number`]="{ item }">
@@ -79,6 +79,7 @@ export default {
       const headers = [
         { text: '数字', value: 'number', align: 'center' },
         { text: '次回率(%)', value: 'currentRate', align: 'right' },
+        { text: '回数(回)', value: 'count', align: 'right' },
         { text: '次回差(回前)', value: 'currentInterval', align: 'right' },
       ]
       for (let i = 0; i < 10; i++) {
@@ -92,7 +93,10 @@ export default {
     },
     intervalItems() {
       return this.numIntervals.map((numInterval) => {
-        const item = { number: numInterval.number }
+        const item = {
+          number: numInterval.number,
+          count: numInterval.times.length,
+        }
 
         let prevTimes = this.latestTimes + 1
         numInterval.times.forEach((times, index) => {

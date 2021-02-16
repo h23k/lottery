@@ -9,18 +9,10 @@
       :headers="backnumberNumberHeader"
       :items="backnumberNumberItems"
       :items-per-page="backnumberNumberItems.length"
-      :sort-by="['interval', 'number']"
+      :sort-by="['intervalAvg', 'number']"
       :sort-desc="[false, false]"
       item-key="number"
     >
-      <!-- <template
-        v-slot:[`item.data-table-select`]="{ item, isSelected, select }"
-      >
-        <v-simple-checkbox
-          :value="isSelected"
-          @input="clickCheckBox(item, isSelected, select)"
-        ></v-simple-checkbox>
-      </template> -->
       <template v-slot:[`item.number`]="{ item }">
         <NumberChip
           :number="Number(item.number)"
@@ -294,13 +286,13 @@ export default {
       const headers = []
       headers.push({ text: '数字', value: 'number', align: 'center' })
       headers.push({
-        text: '出現回数(回)',
-        value: 'count',
+        text: '出現間隔率(%)',
+        value: 'intervalRate',
         align: 'right',
       })
       headers.push({
-        text: '出現間隔率(%)',
-        value: 'intervalRate',
+        text: '出現回数(回)',
+        value: 'count',
         align: 'right',
       })
       headers.push({
@@ -367,6 +359,9 @@ export default {
       })
       return items
     },
+  },
+  beforeUpdate() {
+    this.selectRow = this.selected
   },
   updated() {
     this.$emit('onLoad', {

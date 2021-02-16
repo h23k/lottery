@@ -1,31 +1,30 @@
 <template>
-  <div>
-    <v-row>
-      <v-col>
-        <v-card elevation="1">
-          <v-card-title>前回結果</v-card-title>
-          <v-card-text>
-            <v-layout align-center>
-              <v-flex xs2 class="text-center">
-                {{ latestDate }}<br />{{ latestTimes }}回
-              </v-flex>
-              <v-divider vertical></v-divider>
-              <v-flex xs7 class="d-flex justify-space-around">
-                <span v-for="number in latestNumber" :key="number">
-                  {{ number }}
-                </span>
-              </v-flex>
-              <v-divider vertical></v-divider>
-              <v-flex xs3 class="d-flex justify-space-around">
-                <span v-for="bonus in latestBonus" :key="bonus">
-                  {{ bonus }}
-                </span>
-              </v-flex>
-            </v-layout>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
+  <v-container>
+    <v-banner sticky elevation="1" color="white" app>
+      <v-layout align-center>
+        <v-flex xs2 class="text-center">
+          {{ latestDate }}<br />{{ latestTimes }}回
+        </v-flex>
+        <v-divider vertical></v-divider>
+        <v-flex xs7 class="d-flex justify-space-around">
+          <NumberChip
+            v-for="number in latestNumber"
+            :key="number"
+            :number="Number(number)"
+            :outlined="false"
+          />
+        </v-flex>
+        <v-divider vertical></v-divider>
+        <v-flex xs3 class="d-flex justify-space-around">
+          <NumberChip
+            v-for="bonus in latestBonus"
+            :key="bonus"
+            :number="Number(bonus)"
+            :outlined="false"
+          />
+        </v-flex>
+      </v-layout>
+    </v-banner>
     <v-row class="mb-10">
       <LotoCountChart :type="type" />
     </v-row>
@@ -62,7 +61,7 @@
         :selected="selected"
       />
     </v-row>
-  </div>
+  </v-container>
 </template>
 
 <script>

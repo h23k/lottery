@@ -1,5 +1,5 @@
 <template>
-  <v-row justify="center" align="center">
+  <v-row justify="center">
     <v-col cols="12">
       <v-tabs v-model="tab" align-with-title>
         <v-tabs-slider color="yellow"></v-tabs-slider>

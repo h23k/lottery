@@ -9,8 +9,8 @@
       :headers="dataTableHeaders"
       :items="countItems"
       :items-per-page="countItems.length"
-      :sort-by="['timesDiffRate', 'luckyRecentRate', 'number']"
-      :sort-desc="[true, true, false]"
+      :sort-by="['timesDiffRate', 'luckyRecentRate', 'luckyRate', 'number']"
+      :sort-desc="[true, true, true, false]"
       item-key="number"
     >
       <template
@@ -74,6 +74,7 @@ export default {
       { text: '全体出現率(%)', value: 'luckyRate', align: 'right' },
       { text: '最近出現率(%)', value: 'luckyRecentRate', align: 'right' },
       { text: '出現間隔(回前)', value: 'timesDiff', align: 'right' },
+      { text: '間隔出現率(%)', value: 'intervalRate', align: 'right' },
       { text: '出現間隔率(%)', value: 'timesDiffRate', align: 'right' },
       { text: '出現差数(回)', value: 'intervalCount', align: 'right' },
     ],
@@ -119,9 +120,13 @@ export default {
         const intervalSummary = this.intervalSummary[intervalKeysIndex] || {
           timesCount: 0,
         }
+        item.intervalRate = this.$convertDisplayRate(
+          this.backnumberCount,
+          intervalSummary.timesCount
+        )
         item.timesDiffRate = this.$convertDisplayRate(
-          this.numbers.length * this.backnumberCount,
-          this.intervalCounts[intervalKeysIndex] * intervalSummary.timesCount
+          this.numbers.length,
+          this.intervalCounts[intervalKeysIndex]
         )
         const interval = this.intervals.find((element) => {
           if (Number(element.number) === Number(number.number)) {
