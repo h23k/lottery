@@ -1,11 +1,10 @@
 <template>
-  <v-col cols="12" sm="6" md="4" lg="2">
+  <v-col sm="6" md="4">
     <v-data-table
       v-model="selectRow"
       dense
       show-select
       :hide-default-footer="true"
-      :caption="String(number)"
       :headers="numCombinationHeader"
       :items="numCombinationItems"
       :items-per-page="numCombinationItems.length"
@@ -68,8 +67,8 @@ export default {
     numCombinationHeader() {
       return [
         { text: '数字', value: 'number', align: 'center' },
-        { text: '組合せ回数(回)', value: 'comboCount', align: 'right' },
-        { text: '最近出現数(回)', value: 'recentCount', align: 'right' },
+        { text: '組合せ回数', value: 'comboCount', align: 'right' },
+        { text: '最近出現数', value: 'recentCount', align: 'right' },
         { text: '次回差(回前)', value: 'interval', align: 'right' },
       ]
     },
