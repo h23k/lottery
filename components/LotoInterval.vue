@@ -9,7 +9,7 @@
       :headers="dataTableHeaders"
       :items="intervalItems"
       :items-per-page="intervalItems.length"
-      :sort-by="['currentRate', '0', 'count', 'number']"
+      :sort-by="['intervalRate', '1', 'luckyCount', 'number']"
       :sort-desc="[true, false, true, false]"
       item-key="number"
     >
@@ -61,31 +61,31 @@ export default {
       return this.type === 6 ? this.loto6NumInterval : this.loto7NumInterval
     },
     currentIntervalCounts() {
-      const currentIntervalCounts = []
-      const intervalKeys = LuckyIntervals.getIntervalKeys()
-      intervalKeys.forEach((intervalKey) => {
-        currentIntervalCounts.push(0)
+      const currentIntervalCounts = {}
+      LuckyIntervals.getIntervalKeys().forEach((intervalKey) => {
+        currentIntervalCounts[intervalKey] = 0
       })
       this.numIntervals.forEach((numInterval) => {
         const lastTimes = numInterval.times[0] || 0
-        const intervalIndex = LuckyIntervals.getIntervalKeysIndex(
+        const intervalKey = LuckyIntervals.getIntervalKey(
           this.latestTimes - lastTimes + 1
         )
-        currentIntervalCounts[intervalIndex]++
+        currentIntervalCounts[intervalKey]++
       })
       return currentIntervalCounts
     },
     dataTableHeaders() {
       const headers = [
         { text: '数字', value: 'number', align: 'center' },
-        { text: '次回率(%)', value: 'currentRate', align: 'right' },
-        { text: '回数(回)', value: 'count', align: 'right' },
-        { text: '次回差(回前)', value: 'currentInterval', align: 'right' },
+        { text: '最近出現数(回)', value: 'luckyCount', align: 'right' },
+        { text: '次回率(%)', value: 'intervalRate', align: 'right' },
+        { text: '次回率順位', value: 'intervalRank', align: 'right' },
+        { text: '次回差(回前)', value: 'interval', align: 'right' },
       ]
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 5; i++) {
         headers.push({
-          text: `${i + 1}回前差(回前)`,
-          value: `${i}`,
+          text: `${i + 1}回前(回前)`,
+          value: `${i + 1}`,
           align: 'right',
         })
       }
@@ -95,25 +95,24 @@ export default {
       return this.numIntervals.map((numInterval) => {
         const item = {
           number: numInterval.number,
-          count: numInterval.times.length,
+          luckyCount: numInterval.times.length,
         }
 
         let prevTimes = this.latestTimes + 1
         numInterval.times.forEach((times, index) => {
-          const luckyInterval = prevTimes - times
+          const interval = prevTimes - times
           if (index === 0) {
-            const intervalKeysIndex = LuckyIntervals.getIntervalKeysIndex(
-              luckyInterval
+            const intervalKey = LuckyIntervals.getIntervalKey(interval)
+            const intervalCount = this.currentIntervalCounts[intervalKey]
+            const numbersCount = Object.keys(this.numIntervals).length
+            item.interval = interval
+            item.intervalRate = this.$convertDisplayRate(
+              numbersCount,
+              intervalCount
             )
-            item.currentInterval = luckyInterval
-            item.intervalCount = this.currentIntervalCounts[intervalKeysIndex]
-            item.numberLength = Object.keys(this.numIntervals).length
-            item.currentRate = this.$convertDisplayRate(
-              item.numberLength,
-              item.intervalCount
-            )
+            item.intervalRank = this.getLuckyRank(intervalCount)
           } else {
-            item[index - 1] = prevTimes - times
+            item[index] = interval
           }
           prevTimes = times
         })
@@ -127,12 +126,10 @@ export default {
   updated() {
     this.$emit(
       'onLoad',
-      this.intervalItems.map((intervalItem) => {
+      this.intervalItems.map((item) => {
         return {
-          number: intervalItem.number,
-          intervalRate: intervalItem.currentRate,
-          intervalLength: intervalItem.numberLength,
-          intervalCount: intervalItem.intervalCount,
+          number: item.number,
+          intervalRank: item.intervalRank,
         }
       })
     )
@@ -143,6 +140,13 @@ export default {
         return element.number === Number(number)
       })
       return selectedIndex !== -1
+    },
+    getLuckyRank(count) {
+      let rank = 1
+      for (const key in this.currentIntervalCounts) {
+        if (this.currentIntervalCounts[key] > count) rank++
+      }
+      return rank
     },
   },
 }

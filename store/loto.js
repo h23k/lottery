@@ -6,7 +6,8 @@ export const state = () => ({
   loto6Numbers: [],
   loto6NumInterval: [],
   loto6NumCombination: [],
-  loto6Backnumber: {},
+  loto6Backnumber: [],
+  loto6BacknumberNumbers: [],
   loto7LatestTimes: 0,
   loto7LatestDate: '',
   loto7LatestNumber: [],
@@ -14,7 +15,8 @@ export const state = () => ({
   loto7Numbers: [],
   loto7NumInterval: [],
   loto7NumCombination: [],
-  loto7Backnumber: {},
+  loto7Backnumber: [],
+  loto7BacknumberNumbers: [],
 })
 
 export const mutations = {
@@ -58,6 +60,13 @@ export const mutations = {
   SET_LOTO7_BACKNUMBER(state, backnumber) {
     state.loto7Backnumber = backnumber
   },
+
+  SET_LOTO6_BACKNUMBER_NUMBERS(state, backnumberNumbers) {
+    state.loto6BacknumberNumbers = backnumberNumbers
+  },
+  SET_LOTO7_BACKNUMBER_NUMBERS(state, backnumberNumbers) {
+    state.loto7BacknumberNumbers = backnumberNumbers
+  },
 }
 
 export const actions = {
@@ -100,41 +109,72 @@ export const actions = {
   },
 
   async setLoto6Backnumber({ commit }, { times, max }) {
-    const backnumber = {}
+    const backnumber = []
+    const backnumberNumbers = []
     for (let i = 0; i < max; i++) {
       const targetTimes = times - i
       if (targetTimes <= 0) continue
+
       await this.$axios
         .get(`/loto/6/${targetTimes}`)
         .then(({ data }) => {
-          backnumber[data.times] = {
+          backnumber.push({
+            times: data.times,
             date: data.date,
             nums: data.nums,
-          }
+          })
         })
         .catch((e) => {
-          backnumber[targetTimes] = []
+          backnumber.push({ times: targetTimes })
+        })
+
+      await this.$axios
+        .get(`/loto/6/count/${targetTimes}`)
+        .then(({ data }) => {
+          backnumberNumbers.push({
+            times: data.times,
+            numbers: data.nums,
+          })
+        })
+        .catch((e) => {
+          backnumberNumbers.push({ times: targetTimes })
         })
     }
     commit('SET_LOTO6_BACKNUMBER', backnumber)
+    commit('SET_LOTO6_BACKNUMBER_NUMBERS', backnumberNumbers)
   },
   async setLoto7Backnumber({ commit }, { times, max }) {
-    const backnumber = {}
+    const backnumber = []
+    const backnumberNumbers = []
     for (let i = 0; i < max; i++) {
       const targetTimes = times - i
       await this.$axios
         .get(`/loto/7/${targetTimes}`)
         .then(({ data }) => {
-          backnumber[data.times] = {
+          backnumber.push({
+            times: data.times,
             date: data.date,
             nums: data.nums,
-          }
+          })
         })
         .catch((e) => {
-          backnumber[targetTimes] = []
+          backnumber.push({ times: targetTimes })
+        })
+
+      await this.$axios
+        .get(`/loto/7/count/${targetTimes}`)
+        .then(({ data }) => {
+          backnumberNumbers.push({
+            times: data.times,
+            numbers: data.nums,
+          })
+        })
+        .catch((e) => {
+          backnumberNumbers.push({ times: targetTimes })
         })
     }
     commit('SET_LOTO7_BACKNUMBER', backnumber)
+    commit('SET_LOTO7_BACKNUMBER_NUMBERS', backnumberNumbers)
   },
 
   async setLoto6NumInterval({ commit }, { max }) {

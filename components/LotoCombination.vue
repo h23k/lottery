@@ -69,8 +69,8 @@ export default {
       return [
         { text: '数字', value: 'number', align: 'center' },
         { text: '組合せ回数(回)', value: 'comboCount', align: 'right' },
-        { text: '出現回数(回)', value: 'recentCount', align: 'right' },
-        { text: '出現差(回前)', value: 'interval', align: 'right' },
+        { text: '最近出現数(回)', value: 'recentCount', align: 'right' },
+        { text: '次回差(回前)', value: 'interval', align: 'right' },
       ]
     },
     numCombinationItems() {

@@ -7,12 +7,12 @@
         </v-flex>
         <v-divider vertical></v-divider>
         <v-flex xs7 class="d-flex justify-space-around">
-          <NumberChip
-            v-for="number in latestNumber"
-            :key="number"
-            :number="Number(number)"
-            :outlined="false"
-          />
+          <div v-for="number in latestNumber" :key="number">
+            <NumberChip :number="Number(number)" :outlined="false" />
+            <div class="text-body-2">
+              {{ getInterval(latestTimes, number) }}回前
+            </div>
+          </div>
         </v-flex>
         <v-divider vertical></v-divider>
         <v-flex xs3 class="d-flex justify-space-around">
@@ -24,6 +24,19 @@
           />
         </v-flex>
       </v-layout>
+      <template v-if="selected.length">
+        <v-divider class="my-3"></v-divider>
+        <v-layout align-center>
+          <v-flex xs2 class="text-center"> {{ latestTimes + 1 }}回 </v-flex>
+          <v-divider vertical></v-divider>
+          <v-flex class="text-center d-flex justify-space-around">
+            <div v-for="num in selected" :key="num.number">
+              <NumberChip :number="Number(num.number)" :outlined="false" />
+              <div class="text-body-2">{{ num.interval }}回前</div>
+            </div>
+          </v-flex>
+        </v-layout>
+      </template>
     </v-banner>
     <v-row class="mb-10">
       <LotoCountChart :type="type" />
@@ -35,9 +48,9 @@
       <LotoCount
         :type="type"
         :selected="selected"
-        :backnumber-count="backnumberIntervals.backnumberCount"
-        :interval-summary="backnumberIntervals.backnumberIntervalItems"
-        :intervals="backnumberIntervals.backnumberNumberItems"
+        :backnumber-count="backnumbers.length"
+        :interval-summary="intervalSummary"
+        :numbers-interval="numbersInterval"
         @onLoad="getNumbers"
         @setSelected="updateSelected"
       />
@@ -49,7 +62,7 @@
       <LotoBacknumber
         :type="type"
         :selected="selected"
-        @onLoad="getBacknumberIntervals"
+        @onLoad="getBacknumbers"
       />
     </v-row>
     <v-row>
@@ -78,7 +91,9 @@ export default {
     selected: [],
     numbers: [],
     intervals: [],
-    backnumberIntervals: {},
+    backnumbers: [],
+    intervalSummary: [],
+    numbersInterval: [],
   }),
   computed: {
     getNumberCount() {
@@ -154,53 +169,9 @@ export default {
       'setLoto7NumCombination',
       'setLoto7Backnumber',
     ]),
-    getInterval(times) {
-      return Math.abs(this.latestTimes - times)
-    },
-    getIntervalClassName(interval) {
-      if (interval === 0) {
-        return 'latest'
-      } else if (interval === 1) {
-        return 'level1'
-      } else if (interval === 2 || interval === 3) {
-        return 'level2'
-      } else if (interval === 4 || interval === 5) {
-        return 'level3'
-      } else if (interval >= 6 && interval <= 10) {
-        return 'level4'
-      } else if (interval >= 11) {
-        return 'level5'
-      } else {
-        return ''
-      }
-    },
-    sortByInterval4Backnumber(times) {
-      const arr = this.backnumber[times].concat()
-      arr.sort(function (a, b) {
-        if (a.bonus === 1 || b.bonus === 1) {
-          return -1
-        }
-        return b.last - a.last
-      })
-      return arr
-    },
-    getInterval4Backnumber(num, times) {
-      const nums = this.backnumber[times]
-      const obj = nums.find((element) => num === element.number)
-      if (obj !== undefined) {
-        return times - obj.last
-      } else {
-        return null
-      }
-    },
-    getBacknumberTotalCount(times) {
-      const index = this.backnumberTimes.indexOf(times)
-      const nums = this.backnumberTimes.slice(index)
-      return nums.length
-    },
-    updateSelected({ number, isSelected }) {
+    updateSelected({ number, interval, isSelected }) {
       if (isSelected) {
-        this.selected.push({ number })
+        this.selected.push({ number, interval })
       } else {
         for (let i = 0; i < this.selected.length; i++) {
           if (this.selected[i].number === number) {
@@ -216,8 +187,22 @@ export default {
     getIntervals(intervals) {
       this.intervals = intervals
     },
-    getBacknumberIntervals(backnumberIntervals) {
-      this.backnumberIntervals = backnumberIntervals
+    getBacknumbers(backnumbers) {
+      this.backnumbers = backnumbers.backnumbers
+      this.intervalSummary = backnumbers.intervalSummary
+      this.numbersInterval = backnumbers.numbersInterval
+    },
+    getInterval(times, number) {
+      const backnumber =
+        this.backnumbers.find(
+          (backnumber) => backnumber.times === String(times)
+        ) || {}
+      for (let i = 1; i <= this.getNumberCount; i++) {
+        if (backnumber[`lucky${i}`] === Number(number)) {
+          return backnumber[`interval${i}`]
+        }
+      }
+      return '-'
     },
   },
 }

@@ -106,6 +106,81 @@ app.get('/:type/count', (req, res, next) => {
   connection.end()
 })
 
+app.get('/:type/count/:times', (req, res, next) => {
+  const paramType = req.params.type === '6' ? 'loto6' : 'loto7'
+  const recentTimes = req.params.type === '6' ? 103 : 51
+  const paramTimes = req.params.times
+  const sql = `select total.num, total.count, total.last, lucky.count, lucky.last, lucky_recent.count, bonus.count, bonus.last
+                 from (select num, count(num) as count, max(times) as last
+                              from ??
+                             where times < ?
+                             group by num) as total
+                 left join (select num, count(num) as count, max(times) as last
+                              from ??
+                             where bonus = 0
+                               and times < ?
+                             group by num) as lucky
+                   on total.num = lucky.num
+                 left join (select num, count(num) as count, max(times) as last
+                              from ??
+                             where bonus = 0
+                               and times between ? - ? and ?
+                             group by num) as lucky_recent
+                   on total.num = lucky_recent.num
+                 left join (select num, count(num) as count, max(times) as last
+                              from ??
+                             where bonus = 1
+                               and times < ?
+                             group by num) as bonus
+                   on total.num = bonus.num
+                order by total.num`
+  const connection = mysql.createConnection(connectionConfig)
+  connection.connect()
+  connection.query(
+    { sql, nestTables: true },
+    [
+      paramType,
+      paramTimes,
+      paramType,
+      paramTimes,
+      paramType,
+      paramTimes,
+      recentTimes,
+      paramTimes,
+      paramType,
+      paramTimes,
+    ],
+    (error, results, fields) => {
+      if (error) {
+        next(error)
+      } else {
+        const resultMaxTimes = results.reduce((prevVal, currVal) => {
+          return prevVal.total.last >= currVal.total.last ? prevVal : currVal
+        })
+        const maxTimes = resultMaxTimes.total.last
+        const recentCountMax =
+          maxTimes - (recentTimes + 1) <= 0 ? maxTimes : recentTimes + 1
+        const nums = results.map((result) => {
+          return {
+            number: result.total.num,
+            recentCountMax,
+            timesDiff: maxTimes - result.lucky.last + 1,
+            totalCount: result.total.count,
+            totalLast: result.total.last,
+            luckyCount: result.lucky.count,
+            luckyRecentCount: result.lucky_recent.count,
+            luckyLast: result.lucky.last,
+            bonusCount: result.bonus.count,
+            bonusLast: result.bonus.last,
+          }
+        })
+        res.json({ times: paramTimes, nums })
+      }
+    }
+  )
+  connection.end()
+})
+
 app.get('/:type/:times', (req, res, next) => {
   const paramType = req.params.type === '6' ? 'loto6' : 'loto7'
   const recentTimes = req.params.type === '6' ? 103 : 51

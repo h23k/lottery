@@ -9,8 +9,8 @@
       :headers="dataTableHeaders"
       :items="countItems"
       :items-per-page="countItems.length"
-      :sort-by="['timesDiffRate', 'luckyRecentRate', 'luckyRate', 'number']"
-      :sort-desc="[true, true, true, false]"
+      :sort-by="['luckyRecentCount', 'luckyCount', 'timesDiff']"
+      :sort-desc="[true, true, false]"
       item-key="number"
     >
       <template
@@ -31,7 +31,7 @@
 <script>
 import { mapState } from 'vuex'
 import NumberChip from '@/components/NumberChip'
-import LuckyIntervals from '@/plugins/lucky-intervals'
+// import LuckyIntervals from '@/plugins/lucky-intervals'
 
 export default {
   components: {
@@ -58,7 +58,7 @@ export default {
         return []
       },
     },
-    intervals: {
+    numbersInterval: {
       type: Array,
       default: () => {
         return []
@@ -69,14 +69,13 @@ export default {
     selectRow: [],
     dataTableHeaders: [
       { text: '数字', value: 'number', align: 'center' },
-      { text: '全体回数(回)', value: 'luckyCount', align: 'right' },
-      { text: '最近回数(回)', value: 'luckyRecentCount', align: 'right' },
-      { text: '全体出現率(%)', value: 'luckyRate', align: 'right' },
+      { text: '出現数', value: 'luckyCount', align: 'right' },
+      { text: '出現数順位', value: 'luckyRank', align: 'right' },
+      { text: '最近出現数', value: 'luckyRecentCount', align: 'right' },
+      { text: '最近出現数順位', value: 'luckyRecentRank', align: 'right' },
+      { text: '出現率(%)', value: 'luckyRate', align: 'right' },
       { text: '最近出現率(%)', value: 'luckyRecentRate', align: 'right' },
-      { text: '出現間隔(回前)', value: 'timesDiff', align: 'right' },
-      { text: '間隔出現率(%)', value: 'intervalRate', align: 'right' },
-      { text: '出現間隔率(%)', value: 'timesDiffRate', align: 'right' },
-      { text: '出現差数(回)', value: 'intervalCount', align: 'right' },
+      { text: '次回差(回前)', value: 'timesDiff', align: 'right' },
     ],
   }),
   computed: {
@@ -114,45 +113,13 @@ export default {
           number.luckyCount,
           number.luckyRecentCount
         )
-        const intervalKeysIndex = LuckyIntervals.getIntervalKeysIndex(
-          number.timesDiff
+        item.luckyRank = this.getLuckyRank('luckyCount', item.luckyCount)
+        item.luckyRecentRank = this.getLuckyRank(
+          'luckyRecentCount',
+          item.luckyRecentCount
         )
-        const intervalSummary = this.intervalSummary[intervalKeysIndex] || {
-          timesCount: 0,
-        }
-        item.intervalRate = this.$convertDisplayRate(
-          this.backnumberCount,
-          intervalSummary.timesCount
-        )
-        item.timesDiffRate = this.$convertDisplayRate(
-          this.numbers.length,
-          this.intervalCounts[intervalKeysIndex]
-        )
-        const interval = this.intervals.find((element) => {
-          if (Number(element.number) === Number(number.number)) {
-            return element
-          }
-        })
-        const intervalKey = LuckyIntervals.getIntervalKey(number.timesDiff)
-        if (interval) {
-          item.intervalCount = interval[intervalKey]
-        }
         return item
       })
-    },
-    intervalCounts() {
-      const intervalCounts = []
-      const intervalKeys = LuckyIntervals.getIntervalKeys()
-      intervalKeys.forEach((intervalKey) => {
-        intervalCounts.push(0)
-      })
-      this.numbers.forEach((number) => {
-        const intervalKeysIndex = LuckyIntervals.getIntervalKeysIndex(
-          number.timesDiff
-        )
-        intervalCounts[intervalKeysIndex]++
-      })
-      return intervalCounts
     },
   },
   beforeUpdate() {
@@ -164,10 +131,8 @@ export default {
       this.countItems.map((item) => {
         return {
           number: item.number,
-          timesDiff: item.timesDiff,
-          recentRate: item.recentRate,
-          luckyCount: item.luckyCount,
-          luckyRecentCount: item.luckyRecentCount,
+          luckyRank: item.luckyRank,
+          luckyRecentRank: item.luckyRecentRank,
         }
       })
     )
@@ -180,6 +145,13 @@ export default {
         interval: item.timesDiff,
         isSelected: !isSelected,
       })
+    },
+    getLuckyRank(name, value) {
+      let rank = 1
+      this.numbers.forEach((number) => {
+        if (number[name] > value) rank++
+      })
+      return rank
     },
   },
 }
